@@ -59,3 +59,7 @@ Final Assignment for ACG course at Waseda U. [slides](https://esslab.jp/~ess/tea
 
 ## Reference
 [1] https://github.com/bgstaal/multipleWindow3dScene/tree/main
+
+
+## Resource
+[Git Tutorial](https://www.youtube.com/watch?v=HVsySz-h9r4&list=PL-osiE80TeTuRUfjRe54Eea17-YfnOOAx)
