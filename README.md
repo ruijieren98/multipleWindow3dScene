@@ -55,3 +55,7 @@ Final Assignment for ACG course at Waseda U. [slides](https://esslab.jp/~ess/tea
    - Refine user experience based on testing feedback.
    - Documentation of the project by all team members. 2 to 4 A4 pages (with the ACM TOG template which is fairly dense)
    - Prepare application demonstration.
+
+
+## Reference
+[1] https://github.com/bgstaal/multipleWindow3dScene/tree/main
