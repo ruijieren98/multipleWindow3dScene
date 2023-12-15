@@ -1,7 +1,8 @@
 # ACG-final-assignment
 Final Assignment for ACG course at Waseda U. [slides](https://esslab.jp/~ess/teaching/2023/acg/project/)
 
-[Project Description](Initial_project.md) Due: **2023/12/18**
+- [x] [Project Proposal](Initial_project.md) [goold drive](https://docs.google.com/document/d/16W4Wd0lcPZ71vZL2U5yrz4i_9uyCbTT8GA3Mi7HI9w4/edit?usp=sharing)
+ Due: **2023/12/18**
 
 ## Team Structure and Task Assignment
 
