@@ -6,7 +6,7 @@ const t = THREE;
 let camera, scene, renderer, world;
 let near, far;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
-let cubes = [];
+let spheres = [];
 let sceneOffsetTarget = {x: 0, y: 0};
 let sceneOffset = {x: 0, y: 0};
 
@@ -105,21 +105,21 @@ else
 
 	function windowsUpdated ()
 	{
-		updateNumberOfCubes();
+		updateNumberOfSpheres();
 	}
 
-	function updateNumberOfCubes ()
+	function updateNumberOfSpheres ()
 	{
 		let wins = windowManager.getWindows();
 
-		// remove all cubes
-		cubes.forEach((c) => {
+		// remove all spheres
+		spheres.forEach((c) => {
 			world.remove(c);
 		})
 
-		cubes = [];
+		spheres = [];
 
-		// add new cubes based on the current window setup
+		// add new spheres based on the current window setup
 		for (let i = 0; i < wins.length; i++)
 		{
 			let win = wins[i];
@@ -128,12 +128,12 @@ else
 			c.setHSL(i * .1, 1.0, .5);
 
 			let s = 100 + i * 50;
-			let cube = new t.Mesh(new t.BoxGeometry(s, s, s), new t.MeshBasicMaterial({color: c , wireframe: true}));
-			cube.position.x = win.shape.x + (win.shape.w * .5);
-			cube.position.y = win.shape.y + (win.shape.h * .5);
+			let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), new t.MeshBasicMaterial({color: c , wireframe: false})); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
+			sphere.position.x = win.shape.x + (win.shape.w * .5);
+			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
-			world.add(cube);
-			cubes.push(cube);
+			world.add(sphere);
+			spheres.push(sphere);
 		}
 	}
 
@@ -165,18 +165,18 @@ else
 
 
 		// loop through all our cubes and update their positions based on current window positions
-		for (let i = 0; i < cubes.length; i++)
+		for (let i = 0; i < spheres.length; i++)
 		{
-			let cube = cubes[i];
+			let sphere = spheres[i];
 			let win = wins[i];
 			let _t = t;// + i * .2;
 
 			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)}
 
-			cube.position.x = cube.position.x + (posTarget.x - cube.position.x) * falloff;
-			cube.position.y = cube.position.y + (posTarget.y - cube.position.y) * falloff;
-			cube.rotation.x = _t * .5;
-			cube.rotation.y = _t * .3;
+			sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
+			sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
+			sphere.rotation.x = _t * .5;
+			sphere.rotation.y = _t * .3;
 		};
 
 		renderer.render(scene, camera);
