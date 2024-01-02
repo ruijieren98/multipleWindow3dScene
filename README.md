@@ -63,5 +63,8 @@ Final Assignment for ACG course at Waseda U. [slides](https://esslab.jp/~ess/tea
 
 
 ## Resource
-[Git Tutorial](https://www.youtube.com/watch?v=HVsySz-h9r4&list=PL-osiE80TeTuRUfjRe54Eea17-YfnOOAx)
-[GAMES 101](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
+Git Tutorials video: [Youtube](https://www.youtube.com/watch?v=HVsySz-h9r4&list=PL-osiE80TeTuRUfjRe54Eea17-YfnOOAx)
+
+How to Git as a Team: [Blog](https://www.robinwieruch.de/git-team-workflow/)
+
+CG course: [GAMES 101](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
