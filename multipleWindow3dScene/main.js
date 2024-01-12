@@ -80,19 +80,24 @@ else
 
 	function setupScene ()
 	{
+
+		scene = new t.Scene();
+
+
 		//camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
 		camera = new t.PerspectiveCamera(75, window.innerWidth, window.innerHeight, 0.1, 1000);
 		
 		camera.position.set(0,0,0);//camera.position.z = 2.5;
 		//near = 0.1//camera.position.z - .5;
 		//far = 1000;//camera.position.z + 0.5;
+		scene.add( camera );
+
 
 		// 加载hdr环境图
 		let rgbeLoader_bg = new RGBELoader();
 		rgbeLoader_bg.loadAsync("textures/test.hdr").then((texture) => {
 		texture.mapping = THREE.EquirectangularReflectionMapping; // 设置映射类型
 		scene.background = texture; // 设置背景
-		//scene.environment = texture; // 设置环境贴图
 		});
 
 		let rgbeLoader_env = new RGBELoader();
@@ -102,11 +107,9 @@ else
 		scene.environment = texture; // 设置环境贴图
 		});
 
-		scene = new t.Scene();
 		////scene.background = new t.Color(0.0);
 		//let textureLoader = new t.TextureLoader();
 		//scene.background = textureLoader.load('123.jpg');
-		scene.add( camera );
 
 		// realistic reflection on metal
 		cubeRenderTarget.texture.type = THREE.HalfFloatType;
