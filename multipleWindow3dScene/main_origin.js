@@ -76,11 +76,9 @@ else
 
 	function setupScene ()
 	{
-		camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
 
-		camera.position.z = 2.5;
-		near = camera.position.z - .5;
-		far = camera.position.z + 0.5;
+        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
+        camera.position.z = -1000;
 
 		scene = new t.Scene();
 		scene.background = new t.Color(0.0);
@@ -94,6 +92,9 @@ else
 
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
+
+        controls = new OrbitControls( camera, renderer.domElement );
+        controls.autoRotate = false;
 	}
 
 	function setupWindowManager ()
@@ -170,7 +171,7 @@ else
 			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
             //axes helper, not necessary
-            let axesHelper = new t.AxesHelper(100);
+            let axesHelper = new t.AxesHelper(1000);
             axesHelpers.push(axesHelper);
             scene.add(axesHelper);
 			
@@ -211,7 +212,7 @@ else
 		{
 			let sphere = spheres[i];
 			let win = wins[i];
-			let _t = t;// + i * .2;
+			let _t = t + i * .2;
 
 			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
 
@@ -228,6 +229,7 @@ else
             cubeCameras[i].update( renderer, scene );
 		};
 
+        controls.update();
 		renderer.render(scene, camera);
 		requestAnimationFrame(render);
 	}
@@ -239,8 +241,9 @@ else
 		let width = window.innerWidth;
 		let height = window.innerHeight
 
-		camera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
-		camera.updateProjectionMatrix();
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
 		renderer.setSize( width, height );
 	}
     
