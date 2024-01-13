@@ -128,6 +128,7 @@ else
 		})
 
 		spheres = [];
+        cubeCameras = [];
 
 		// add new spheres based on the current window setup
 		for (let i = 0; i < wins.length; i++)
@@ -137,16 +138,39 @@ else
 			let c = new t.Color();
 			c.setHSL(i * .1, 1.0, .5);
 
+            // set CubeCameras
+            new RGBELoader()
+			.setPath( 'textures/' )
+			.load( 'test_1k.hdr', function ( texture ) {
+				texture.mapping = THREE.EquirectangularReflectionMapping;
+
+				scene.background = texture;
+				scene.environment = texture;
+			} );
+
+			let cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256 );
+			cubeRenderTarget.texture.type = THREE.HalfFloatType;
+
+			let cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
+            cubeCameras.push(cubeCamera)
+
+            // set material for each shpere
+			let material = new THREE.MeshStandardMaterial( {
+				envMap: cubeRenderTarget.texture,
+				roughness: 0.05,
+				metalness: 1
+			} );
+
 			let s = 100 + i * 50;
-			let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), new t.MeshBasicMaterial({color: c , wireframe: false})); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
+			// let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), new t.MeshBasicMaterial({color: c , wireframe: false})); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
 			// let material = materials[i];
-			// let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), material); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
+			let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), material); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
 			
 			sphere.position.x = win.shape.x + (win.shape.w * .5); // initial sphere in window center
 			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
             //axes helper, not necessary
-            let axesHelper = new t.AxesHelper(1000);
+            let axesHelper = new t.AxesHelper(100);
             axesHelpers.push(axesHelper);
             scene.add(axesHelper);
 			
@@ -199,6 +223,9 @@ else
 
             axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
 			axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
+
+            cubeCameras[i].position.copy(axesHelpers[i].position);
+            cubeCameras[i].update( renderer, scene );
 		};
 
 		renderer.render(scene, camera);
