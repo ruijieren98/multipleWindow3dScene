@@ -1,12 +1,15 @@
 import WindowManager from './WindowManager.js'
-
 import * as THREE from 'three';
+
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 const t = THREE;
 let camera, scene, renderer, world;
 let near, far;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
-let cubes = [];
+let spheres = [];
+
 let sceneOffsetTarget = {x: 0, y: 0};
 let sceneOffset = {x: 0, y: 0};
 
@@ -21,6 +24,11 @@ let internalTime = getTime();
 let windowManager;
 let initialized = false;
 let axesHelpers = [];
+
+let cubeCameras = [];
+let materials = [];
+let controls;
+
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
@@ -84,8 +92,6 @@ else
 	  	world = new t.Object3D();
 		scene.add(world);
 
-        
-
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
 	}
@@ -108,21 +114,22 @@ else
 
 	function windowsUpdated ()
 	{
-		updateNumberOfCubes();
+        updateNumberOfSpheres();
 	}
 
-	function updateNumberOfCubes ()
+
+    function updateNumberOfSpheres ()
 	{
 		let wins = windowManager.getWindows();
 
-		// remove all cubes
-		cubes.forEach((c) => {
+		// remove all spheres
+		spheres.forEach((c) => {
 			world.remove(c);
 		})
 
-		cubes = [];
+		spheres = [];
 
-		// add new cubes based on the current window setup
+		// add new spheres based on the current window setup
 		for (let i = 0; i < wins.length; i++)
 		{
 			let win = wins[i];
@@ -131,17 +138,20 @@ else
 			c.setHSL(i * .1, 1.0, .5);
 
 			let s = 100 + i * 50;
-			let cube = new t.Mesh(new t.BoxGeometry(s, s, s), new t.MeshBasicMaterial({color: c , wireframe: true}));
-			cube.position.x = win.shape.x + (win.shape.w * .5);
-			cube.position.y = win.shape.y + (win.shape.h * .5);
+			let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), new t.MeshBasicMaterial({color: c , wireframe: false})); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
+			// let material = materials[i];
+			// let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), material); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
+			
+			sphere.position.x = win.shape.x + (win.shape.w * .5); // initial sphere in window center
+			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
             //axes helper, not necessary
             let axesHelper = new t.AxesHelper(1000);
             axesHelpers.push(axesHelper);
             scene.add(axesHelper);
-
-			world.add(cube);
-			cubes.push(cube);
+			
+			world.add(sphere);
+			spheres.push(sphere);
 		}
 	}
 
@@ -173,22 +183,22 @@ else
 
 
 		// loop through all our cubes and update their positions based on current window positions
-		for (let i = 0; i < cubes.length; i++)
+		for (let i = 0; i < spheres.length; i++)
 		{
-			let cube = cubes[i];
+			let sphere = spheres[i];
 			let win = wins[i];
 			let _t = t;// + i * .2;
 
 			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
 
-			cube.position.x = cube.position.x + (posTarget.x - cube.position.x) * falloff;
-			cube.position.y = cube.position.y + (posTarget.y - cube.position.y) * falloff;
+			sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
+			sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
 
-			cube.rotation.x = _t * .5;
-			cube.rotation.y = _t * .3;
+			sphere.rotation.x = _t * .5;
+			sphere.rotation.y = _t * .3;
 
-            axesHelpers[i].position.set(world.position.x + cube.position.x, world.position.y + cube.position.y,0);
-			axesHelpers[i].rotation.set(cube.rotation.x,cube.rotation.y,cube.rotation.z);
+            axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
+			axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
 		};
 
 		renderer.render(scene, camera);
@@ -206,24 +216,5 @@ else
 		camera.updateProjectionMatrix();
 		renderer.setSize( width, height );
 	}
-
-    function resize_() {
-        let width = window.innerWidth;
-        let height = window.innerHeight;
-    
-        // 更新正交摄像机的视窗大小参数，而不是创建新的摄像机实例
-        camera.left = -width / 2;
-        camera.right = width / 2;
-        camera.top = height / 2;
-        camera.bottom = -height / 2;
-    
-        // 更新摄像机的投影矩阵
-        camera.updateProjectionMatrix();
-    
-        // 调整渲染器的大小
-        renderer.setSize(width, height);
-
-        axesHelper.position.set(0, 0, 0);
-    }
     
 }
