@@ -20,7 +20,6 @@ today = today.getTime();
 let internalTime = getTime();
 let windowManager;
 let initialized = false;
-let axesHelper;
 let axesHelpers = [];
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
@@ -85,9 +84,7 @@ else
 	  	world = new t.Object3D();
 		scene.add(world);
 
-        //axes helper, not necessary
-		axesHelper = new t.AxesHelper(1000);
-		scene.add(axesHelper);
+        
 
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
@@ -138,6 +135,11 @@ else
 			cube.position.x = win.shape.x + (win.shape.w * .5);
 			cube.position.y = win.shape.y + (win.shape.h * .5);
 
+            //axes helper, not necessary
+            let axesHelper = new t.AxesHelper(1000);
+            axesHelpers.push(axesHelper);
+            scene.add(axesHelper);
+
 			world.add(cube);
 			cubes.push(cube);
 		}
@@ -182,13 +184,11 @@ else
 			cube.position.x = cube.position.x + (posTarget.x - cube.position.x) * falloff;
 			cube.position.y = cube.position.y + (posTarget.y - cube.position.y) * falloff;
 
-            // cube.position.x = posTarget.x ;
-			// cube.position.y = posTarget.y;
 			cube.rotation.x = _t * .5;
 			cube.rotation.y = _t * .3;
 
-            axesHelper.position.set(world.position.x + cube.position.x, world.position.y + cube.position.y,0);
-			axesHelper.rotation.set(cube.rotation.x,cube.rotation.y,cube.rotation.z);
+            axesHelpers[i].position.set(world.position.x + cube.position.x, world.position.y + cube.position.y,0);
+			axesHelpers[i].rotation.set(cube.rotation.x,cube.rotation.y,cube.rotation.z);
 		};
 
 		renderer.render(scene, camera);
