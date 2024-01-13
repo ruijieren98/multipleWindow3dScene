@@ -6,7 +6,6 @@ import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 const t = THREE;
 let camera, scene, renderer, world;
-let near, far;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
 let spheres = [];
 
@@ -163,14 +162,13 @@ else
 			} );
 
 			let s = 100 + i * 50;
-			// let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), new t.MeshBasicMaterial({color: c , wireframe: false})); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
-			// let material = materials[i];
+
 			let sphere = new t.Mesh(new t.SphereGeometry(s / 2, 32, 32), material); //SphereGeometry(radius,width_segments, height_segments)<--segments can be used to change the quality. 
 			
 			sphere.position.x = win.shape.x + (win.shape.w * .5); // initial sphere in window center
 			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
-            //axes helper, not necessary
+            //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
             axesHelpers.push(axesHelper);
             scene.add(axesHelper);
