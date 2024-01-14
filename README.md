@@ -60,8 +60,8 @@ Final Assignment for ACG course at Waseda U. [slides](https://esslab.jp/~ess/tea
 
 ## Reference
 [1] MultiWindow Interaction: https://github.com/bgstaal/multipleWindow3dScene/tree/main 
-
-[2] Environment Mapping: https://www.kaiyuusya.jp/webLog/article/threejs-RGBELoader
+[2] Demo with [1]: https://twitter.com/_nonfigurativ_/status/1727322594570027343
+[3] Environment Mapping: https://www.kaiyuusya.jp/webLog/article/threejs-RGBELoader
 
 
 ## Resource

@@ -30,6 +30,16 @@ let controls;
 
 let uiIcons = [];
 
+let oimoConfig = {
+	timestep: 1 / 60,
+	iterations: 8,
+	broadphase: 2, // 1: brute force, 2: sweep and prune, 3: volume tree
+	worldscale: 1, // scale full world
+	random: true, // randomize sample
+	info: false, // calculate statistic or not
+	gravity: [0,0,0], 
+  };
+let oimoSpheres = [];
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
@@ -91,6 +101,35 @@ else
 	  	world = new t.Object3D();
 		scene.add(world);
 
+		//Initialize oimo world (Phyiscs)
+		world.oimoWorld = new OIMO.World(oimoConfig); 
+		// Add ground planes as walls
+		const wallThickness = 10; // Thickness of the walls
+		const wallHeight = window.innerHeight;
+		const wallWidth = window.innerWidth;
+		
+		// Parameters: type, size [width, height, depth], position [x, y, z]
+		const walls = [
+			{ type: 'box', size: [wallThickness, wallHeight, 1], pos: [-wallThickness / 2, wallHeight / 2, 0] }, // Left wall
+			{ type: 'box', size: [wallThickness, wallHeight, 1], pos: [wallWidth + wallThickness / 2, wallHeight / 2, 0] }, // Right wall
+			{ type: 'box', size: [wallWidth, wallThickness, 1], pos: [wallWidth / 2, -wallThickness / 2, 0] }, // Top wall
+			{ type: 'box', size: [wallWidth, wallThickness, 1], pos: [wallWidth / 2, wallHeight + wallThickness / 2, 0] } // Bottom wall
+		];
+	
+		walls.forEach(wall => {
+			world.oimoWorld.add({
+				type: wall.type,
+				size: wall.size,
+				pos: wall.pos,
+				move: false,
+				density: 1,
+				friction: 0.2,
+				restitution: 0.9,
+				belongsTo: 1,
+				collidesWith: 0xffffffff
+			});
+		});
+
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
 
@@ -150,8 +189,14 @@ else
 			world.remove(c);
 		})
 
+		// remove oimospheres
+		oimoSpheres.forEach((c) => {
+			world.remove(c);
+		})
+
 		spheres = [];
         cubeCameras = [];
+		oimoSpheres = [];
 
 		// add new spheres based on the current window setup
 		for (let i = 0; i < wins.length; i++)
@@ -194,6 +239,27 @@ else
 			sphere.winId = wins[i].id;  // link sphere with window
 			sphere.isMoving = true;    // initial sphere movement status
 			sphere.velocity = {x: 0, y: 10};  // initial sphere velocity
+
+			let oimoSphere = world.oimoWorld.add({
+				type: 'sphere',
+				size: [s / 2],
+				pos: [win.shape.x + win.shape.w * 0.5, win.shape.y + win.shape.h * 0.5, 0],
+				move: true,
+				density: 1,
+    			friction: 0.2,
+    			restitution: 0.9,
+				belongsTo: 1, // The bits of the collision groups to which the shape belongs.
+   				 collidesWith: 0xffffffff // The bits of the collision groups with which the shape collides.
+
+			  });
+			  let initialVelocity = {
+				x: 0,
+				y: -10,
+				z: 0
+			};
+			oimoSphere.linearVelocity.set(0, initialVelocity.y, 0);
+			oimoSpheres.push(oimoSphere);
+
 
             //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
@@ -275,10 +341,38 @@ else
 			}
 			
 			if (sphere.isMoving) {
-				updateSphereMovement(sphere, win);
+				// updateSphereMovement(sphere, win);
+
+				let oimoSphere = oimoSpheres[i];
+
+				let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
+				sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
+				sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
+
+				sphere.rotation.x = _t * .5;
+				sphere.rotation.y = _t * .3;
+
+				sphere.position.copy( oimoSphere.getPosition() );
+
+
+				axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
+				axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
+
+				cubeCameras[i].position.copy(axesHelpers[i].position);
+				cubeCameras[i].update( renderer, scene );
 			}
 
 		};
+
+		//checking for collisions
+		for (let i = 0; i < spheres.length - 1; i++) {
+			for (let j = i + 1; j < spheres.length; j++) {
+				if (checkCollision(spheres[i], spheres[j])) {
+					spheres[i].isFollowingPhysics = true;
+					spheres[j].isFollowingPhysics = true;
+				}
+			}
+		}
 
         controls.update();
 		renderer.render(scene, camera);
