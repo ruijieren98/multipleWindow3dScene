@@ -84,8 +84,14 @@ else
 	function setupScene ()
 	{
 
-        camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-        camera.position.z = -1000;
+		camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
+		camera.position.z = 2.5;
+
+        // camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
+        // camera.position.z = -1000;
+		// camera.position.x = window.innerWidth;
+		// camera.position.y = window.innerHeight;
+
 
 		scene = new t.Scene();
 		scene.background = new t.Color(0.0);
@@ -289,8 +295,8 @@ else
 
 			// Update the rotation of the sphere based on a time variable (_t)
 			// The rotations are scaled by different factors for x and y axes
-			sphere.rotation.x = _t * 0.5;
-			sphere.rotation.y = _t * 0.3;
+			// sphere.rotation.x = _t * 0.5;
+			// sphere.rotation.y = _t * 0.3;
 
 			// Update the position and rotation of an axes helper to match the sphere
 			// This axes helper is likely used to visualize the orientation of the sphere
@@ -337,11 +343,16 @@ else
 			// Update the position of cube cameras to match the position of axes helpers
 			// This suggests that each cube camera is associated with an axes helper
 			// cubeCameras are likely used for rendering or environmental mapping
-			cubeCameras[i].position.copy(axesHelpers[i].position);
+			cubeCameras[i].position.x = world.position.x + sphere.position.x;
+			cubeCameras[i].position.y = world.position.y + sphere.position.y;
+			cubeCameras[i].position.z = world.position.z + sphere.position.z;
+
+
 
 			// Update the cube camera with the current renderer and scene
 			// This is typically done to render the scene from the camera's perspective
 			cubeCameras[i].update(renderer, scene);
+
 
 
 
@@ -360,8 +371,19 @@ else
 		let width = window.innerWidth;
 		let height = window.innerHeight
 
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+        
+
+		camera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
+		camera.updateProjectionMatrix();
+
+		
+		// camera.position.x = width / 2;
+		// camera.position.y = height / 2;
+
+        // camera.position.z = -1000;
+
+		// // camera.aspect = window.innerWidth / window.innerHeight;
+        // camera.updateProjectionMatrix();
 
 		renderer.setSize( width, height );
 	}
