@@ -102,7 +102,7 @@ else
 
         controls = new OrbitControls( camera, renderer.domElement );
         controls.autoRotate = false;
-		controls.enableRotate = false;
+		controls.enableRotate = true;
 	}
 
 	function setupWindowManager ()
@@ -198,6 +198,7 @@ else
 			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
 			sphere.winId = wins[i].id;  // link sphere with window
+			sphere.radius = s / 2;
 
 			world.add(sphere);
 			spheres.push(sphere);
@@ -229,6 +230,28 @@ else
 	}
 
 
+	function calculateAttraction(sphere) {
+		// 假设吸引力场的大小与sphere的半径成正比
+		return sphere.radius * 2; // 或者其他基于半径的公式
+	}
+	
+	function findMostAttractiveSphere(satellite, spheres) {
+		let maxAttraction = 0;
+		let mostAttractiveSphere = null;
+	
+		spheres.forEach(sphere => {
+			let distance = satellite.position.distanceTo(sphere.position);
+			let attractionField = calculateAttraction(sphere);
+	
+			if (distance < attractionField && attractionField > maxAttraction) {
+				maxAttraction = attractionField;
+				mostAttractiveSphere = sphere;
+			}
+		});
+	
+		return mostAttractiveSphere;
+	}
+	
 
 	function render ()
 	{
@@ -286,9 +309,17 @@ else
 			// The satellite orbits around the sphere in a circular path
 			// 'satellite_r' is the radius of the orbit
 			let satellite = satellites[i];
-			satellite.position.x = Math.cos(_t) * satellite_r + sphere.position.x;
-			satellite.position.y = Math.sin(_t) * satellite_r + sphere.position.y;
-			satellite.position.z = Math.sin(_t) * satellite_r + sphere.position.z;
+			let mostAttractiveSphere = findMostAttractiveSphere(satellite, spheres);
+
+			if (!mostAttractiveSphere) {
+				mostAttractiveSphere = sphere;
+			}
+
+			satellite.position.x += ( (Math.cos(_t) * satellite_r + mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
+			satellite.position.y += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
+			satellite.position.z += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
+			
+			
 
 			// Update the position and rotation of an axes helper for the satellite
 			// This is likely for visualizing the orientation of the satellite
