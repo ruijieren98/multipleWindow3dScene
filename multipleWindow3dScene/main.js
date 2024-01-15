@@ -102,7 +102,7 @@ else
 
         controls = new OrbitControls( camera, renderer.domElement );
         controls.autoRotate = false;
-		controls.enableRotate = true;
+		controls.enableRotate = false;
 	}
 
 	function setupWindowManager ()
@@ -229,6 +229,7 @@ else
 	}
 
 
+
 	function render ()
 	{
 		let t = getTime();
@@ -258,28 +259,59 @@ else
 
 			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
 
-			sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
-			sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
+			// Update the position of the sphere towards a target position (posTarget)
+			// This creates a smooth transition effect, controlled by the 'falloff' factor
+			sphere.position.x += (posTarget.x - sphere.position.x) * falloff;
+			sphere.position.y += (posTarget.y - sphere.position.y) * falloff;
 
-			sphere.rotation.x = _t * .5;
-			sphere.rotation.y = _t * .3;
+			// Update the rotation of the sphere based on a time variable (_t)
+			// The rotations are scaled by different factors for x and y axes
+			sphere.rotation.x = _t * 0.5;
+			sphere.rotation.y = _t * 0.3;
 
-			axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
-			axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
+			// Update the position and rotation of an axes helper to match the sphere
+			// This axes helper is likely used to visualize the orientation of the sphere
+			axesHelpers[i].position.set(
+				world.position.x + sphere.position.x,
+				world.position.y + sphere.position.y,
+				0
+			);
+			axesHelpers[i].rotation.set(
+				sphere.rotation.x,
+				sphere.rotation.y,
+				sphere.rotation.z
+			);
 
-
+			// Update the position of a satellite object
+			// The satellite orbits around the sphere in a circular path
+			// 'satellite_r' is the radius of the orbit
 			let satellite = satellites[i];
-			satellite.position.x = Math.cos( _t ) * satellite_r + sphere.position.x;
-			satellite.position.y = Math.sin( _t ) * satellite_r + sphere.position.y;
-			satellite.position.z = Math.sin( _t ) * satellite_r + sphere.position.z;
-			satellites[i] = satellite;
+			satellite.position.x = Math.cos(_t) * satellite_r + sphere.position.x;
+			satellite.position.y = Math.sin(_t) * satellite_r + sphere.position.y;
+			satellite.position.z = Math.sin(_t) * satellite_r + sphere.position.z;
 
-			axesHelpers_satellites[i].position.set(world.position.x + satellite.position.x, world.position.y + satellite.position.y, satellite.position.z);
-			axesHelpers_satellites[i].rotation.set(satellite.rotation.x,satellite.rotation.y,satellite.rotation.z);
-			
-			
+			// Update the position and rotation of an axes helper for the satellite
+			// This is likely for visualizing the orientation of the satellite
+			axesHelpers_satellites[i].position.set(
+				world.position.x + satellite.position.x,
+				world.position.y + satellite.position.y,
+				satellite.position.z
+			);
+			axesHelpers_satellites[i].rotation.set(
+				satellite.rotation.x,
+				satellite.rotation.y,
+				satellite.rotation.z
+			);
+
+			// Update the position of cube cameras to match the position of axes helpers
+			// This suggests that each cube camera is associated with an axes helper
+			// cubeCameras are likely used for rendering or environmental mapping
 			cubeCameras[i].position.copy(axesHelpers[i].position);
-			cubeCameras[i].update( renderer, scene );
+
+			// Update the cube camera with the current renderer and scene
+			// This is typically done to render the scene from the camera's perspective
+			cubeCameras[i].update(renderer, scene);
+
 
 
 
