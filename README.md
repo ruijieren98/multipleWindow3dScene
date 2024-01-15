@@ -70,3 +70,19 @@ Git Tutorials video: [Youtube](https://www.youtube.com/watch?v=HVsySz-h9r4&list=
 How to Git as a Team: [Blog](https://www.robinwieruch.de/git-team-workflow/)
 
 CG course: [GAMES 101](https://sites.cs.ucsb.edu/~lingqi/teaching/games101.html)
+
+
+## Presentation
+
+- Environment mapping: 
+1. how to load a 2D image so that it looks like a background. 
+2. how does CubeCamera work, dynamic update of the scene
+
+- BRDF
+1. how the metallness change from glass to glossy balls? If it Desney BRDF?
+
+- Multi-window interaction
+1. mention the localstorage and generate a graph
+
+- Ball movement
+1. physics?
