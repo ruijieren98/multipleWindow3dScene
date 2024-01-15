@@ -8,6 +8,7 @@ const t = THREE;
 let camera, scene, renderer, world;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
 let spheres = [];
+let satellites = [];
 
 let sceneOffsetTarget = {x: 0, y: 0};
 let sceneOffset = {x: 0, y: 0};
@@ -23,12 +24,17 @@ let internalTime = getTime();
 let windowManager;
 let initialized = false;
 let axesHelpers = [];
+let axesHelpers_satellites = [];
+
 
 let cubeCameras = [];
 let materials = [];
 let controls;
 
 let uiIcons = [];
+
+let satellite_r = 120; 
+let satellite_angle = 0;	
 
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
@@ -96,6 +102,7 @@ else
 
         controls = new OrbitControls( camera, renderer.domElement );
         controls.autoRotate = false;
+		controls.enableRotate = true;
 	}
 
 	function setupWindowManager ()
@@ -134,12 +141,6 @@ else
         updateNumberOfSpheres();
 	}
 
-	function toggleSphereMovement(index) {
-		let sphere = spheres[index];
-		if (sphere) {
-			sphere.isMoving = !sphere.isMoving;
-		}
-	}
 
     function updateNumberOfSpheres ()
 	{
@@ -150,8 +151,13 @@ else
 			world.remove(c);
 		})
 
+		satellites.forEach((c) => {
+			world.remove(c);
+		})
+
 		spheres = [];
         cubeCameras = [];
+		satellites = [];
 
 		// add new spheres based on the current window setup
 		for (let i = 0; i < wins.length; i++)
@@ -192,16 +198,26 @@ else
 			sphere.position.y = win.shape.y + (win.shape.h * .5);
 
 			sphere.winId = wins[i].id;  // link sphere with window
-			sphere.isMoving = true;    // initial sphere movement status
-			sphere.velocity = {x: 0, y: 10};  // initial sphere velocity
+
+			world.add(sphere);
+			spheres.push(sphere);
+
 
             //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
             axesHelpers.push(axesHelper);
             scene.add(axesHelper);
+
+			let axesHelpers_satellite = new t.AxesHelper(100);
+            axesHelpers_satellites.push(axesHelpers_satellite);
+            scene.add(axesHelpers_satellite);
+
+
+			let satellite = new THREE.Mesh( new t.SphereGeometry(16, 16, 16), new THREE.MeshBasicMaterial({color: c , wireframe: true}) );
+			satellites.push(satellite);
 			
-			world.add(sphere);
-			spheres.push(sphere);
+			world.add(satellite);
+
 		}
 	}
 
@@ -210,25 +226,6 @@ else
 		// storing the actual offset in a proxy that we update against in the render function
 		sceneOffsetTarget = {x: -window.screenX, y: -window.screenY};
 		if (!easing) sceneOffset = sceneOffsetTarget;
-	}
-
-	function updateSphereMovement (sphere, win) 
-	{
-		// position update
-		sphere.position.x += sphere.velocity.x;
-		sphere.position.y += sphere.velocity.y;
-	
-		// collision detection and bouncing
-		if (sphere.position.y - sphere.geometry.parameters.radius < win.shape.y ||
-			sphere.position.y + sphere.geometry.parameters.radius > win.shape.y + win.shape.h) 
-			{
-				sphere.velocity.y *= -1; // Y-axis Bouncing
-			}
-		if (sphere.position.x - sphere.geometry.parameters.radius < win.shape.x ||
-		sphere.position.x + sphere.geometry.parameters.radius > win.shape.x + win.shape.w) 
-			{
-				sphere.velocity.x *= -1; // X-axis Bouncing
-			}
 	}
 
 
@@ -250,33 +247,41 @@ else
 
 		let wins = windowManager.getWindows();
 
+
+
 		// loop through all our cubes and update their positions based on current window positions
 		for (let i = 0; i < spheres.length; i++)
 		{
 			let sphere = spheres[i];
 			let win = wins[i];
 			let _t = t + i * .2;
+
+			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
+
+			sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
+			sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
+
+			sphere.rotation.x = _t * .5;
+			sphere.rotation.y = _t * .3;
+
+			axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
+			axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
+
+
+			let satellite = satellites[i];
+			satellite.position.x = Math.cos( _t ) * satellite_r + sphere.position.x;
+			satellite.position.y = Math.sin( _t ) * satellite_r + sphere.position.y;
+			satellite.position.z = Math.sin( _t ) * satellite_r + sphere.position.z;
+			satellites[i] = satellite;
+
+			axesHelpers_satellites[i].position.set(world.position.x + satellite.position.x, world.position.y + satellite.position.y, satellite.position.z);
+			axesHelpers_satellites[i].rotation.set(satellite.rotation.x,satellite.rotation.y,satellite.rotation.z);
 			
-			if (!sphere.isMoving)
-			{
-				let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
-
-				sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
-				sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
-
-				sphere.rotation.x = _t * .5;
-				sphere.rotation.y = _t * .3;
-
-				axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
-				axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
-
-				cubeCameras[i].position.copy(axesHelpers[i].position);
-				cubeCameras[i].update( renderer, scene );
-			}
 			
-			if (sphere.isMoving) {
-				updateSphereMovement(sphere, win);
-			}
+			cubeCameras[i].position.copy(axesHelpers[i].position);
+			cubeCameras[i].update( renderer, scene );
+
+
 
 		};
 
