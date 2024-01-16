@@ -107,7 +107,9 @@ Before you begin, ensure you have the latest version of Node.js installed on you
 
 ## Reference
 [1] MultiWindow Interaction: https://github.com/bgstaal/multipleWindow3dScene/tree/main 
+
 [2] Demo with [1]: https://twitter.com/_nonfigurativ_/status/1727322594570027343
+
 [3] Environment Mapping: https://www.kaiyuusya.jp/webLog/article/threejs-RGBELoader
 
 
