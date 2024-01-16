@@ -39,6 +39,10 @@ let satellite_r = 120;
 let satellite_angle = 0;	
 
 let orth_camera = true;
+let gui = new GUI();
+
+let Orthcamera;
+let Perscamera;
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
@@ -72,7 +76,7 @@ else
 	function init ()
 	{
 		initialized = true;
-
+		
 		// add a short timeout because window.offsetX reports wrong values before a short period 
 		setTimeout(() => {
 			setupScene();
@@ -86,36 +90,28 @@ else
 
 	function setupScene ()
 	{
-		if (orth_camera) {
-			camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
-			camera.position.z = 2.5;
-		}
-		else {
-			camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-			camera.position.z = -1000;
-			camera.position.x = window.innerWidth;
-			camera.position.y = window.innerHeight;
-		}
 
-        
+		Orthcamera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
+		Orthcamera.position.z = 2.5;
 
+		Perscamera = new t.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
+		Perscamera.position.z = -1000;
+		Perscamera.position.x = window.innerWidth;
+		Perscamera.position.y = window.innerHeight;
 
 		scene = new t.Scene();
 		scene.background = new t.Color(0.0);
-		scene.add( camera );
+		//scene.add( camera );
+		scene.add( Perscamera );
+		scene.add( Orthcamera );
 
-		ambientLight = new t.AmbientLight( 0x404040 ); // soft white light
-		//scene.add( ambientLight );
-
-
-		////////////////////////////////////////////////
+		//////////////////////////////////////////////// particle system
 		let starGeometry = new t.BufferGeometry();
 		let vertices = [];
 		for (let i = 0; i < 5000; i++) {
 				let x = Math.random() * 5000 - 2000;
 				let y = Math.random() * 5000 - 2000;
 				let z = Math.random() * 5000 - 2000;
-			//let star = new THREE.Vector3();
 			vertices.push( x, y, z );
 		}
 		starGeometry.setAttribute( 'position', new t.Float32BufferAttribute( vertices, 3 ) );
@@ -130,19 +126,19 @@ else
 
 		////////////////////////////////////////////
 
-
+		world = new t.Object3D();
+		scene.add(world);
 
 		renderer = new t.WebGLRenderer({antialias: true, depthBuffer: true});
 		renderer.setPixelRatio(pixR);
-
-	  	world = new t.Object3D();
-		scene.add(world);
-
+	  	
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
 
-        controls = new OrbitControls( camera, renderer.domElement );
-        controls.autoRotate = false;
+		//controls = new OrbitControls( Orthcamera, renderer.domElement );
+
+		controls = new OrbitControls( Perscamera, renderer.domElement );
+		controls.autoRotate = false;
 		controls.enableRotate = true;
 	}
 
@@ -216,14 +212,9 @@ else
 			let material = new THREE.MeshStandardMaterial( {
 				envMap: cubeRenderTarget.texture,
 				//map: texture_sphere,
-				roughness: 0.05,
+				roughness: 0.14,
 				metalness: 1,
-				color: 0xffffff,
-			} );
-			let material_T = new THREE.MeshStandardMaterial( {
-				color: 0xfff000, // 金属的颜色
-				metalness: 0.8, // 金属度 0.0 到 1.0 之间
-				roughness: 0.3  // 粗糙度 0.0 到 1.0 之间
+				color: 0xc188c8,
 			} );
 
 			let s = 100 + i * 50;
@@ -239,10 +230,22 @@ else
 			world.add(sphere);
 			spheres.push(sphere);
 
-
-			const gui = new GUI();
-			gui.add(sphere.material, "roughness", 0, 1); // roughness
-			gui.add(sphere.material, "metalness", 0, 1); // metalness
+			
+			gui.add(sphere.material, "roughness", 0, 1); // change roughness
+			gui.add(sphere.material, "metalness", 0, 1); // change metalness
+			var color = {
+				color: '#c188c8'
+			};
+			gui.addColor(color, 'color').onChange(function(newValue) {
+				// change color
+				sphere.material.color.set(newValue);
+			});
+			//gui.add(orth_camera, 'orth_camera');
+			gui.add({orth_camera}, 'orth_camera').name('2D/3D').onChange(function(newValue) {
+				orth_camera = !orth_camera;
+				console.log("x 的新值为:", orth_camera);
+				//CameraDetermination();
+			});
 
             //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
@@ -258,7 +261,6 @@ else
 			satellites.push(satellite);
 			
 			world.add(satellite);
-
 		}
 	}
 
@@ -417,25 +419,6 @@ else
 
 				cubeCameras[i].position.copy(axesHelpers[i].position);
 				cubeCameras[i].update( renderer, scene );
-
-				//cursor event
-				const raycaster = new THREE.Raycaster();
-				const mouse = new THREE.Vector2();
-				function onMouseMove(event) {
-				// 将鼠标位置转换为归一化设备坐标(-1 到 +1)
-				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-				mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-				}
-				window.addEventListener('mousemove', onMouseMove, false);
-
-				raycaster.setFromCamera(mouse, camera);
-    			const intersects = raycaster.intersectObjects([sphere]);
-    			// 处理相交对象
-				if (intersects.length > 0) {
-					// 鼠标在球体上
-					console.log("鼠标在球体上");
-					//sphere.material.color.set( 0x00ff00 );
-				}
 			}
 			
 			if (orth_camera)
@@ -443,17 +426,14 @@ else
 				cubeCameras[i].rotation.x = Math.PI ;
 				cubeCameras[i].rotation.y = Math.PI ;
 			}
-
-
+			else{
+				cubeCameras[i].rotation.x = 0 ;
+				cubeCameras[i].rotation.y = 0 ;
+			}
 
 			// Update the cube camera with the current renderer and scene
 			// This is typically done to render the scene from the camera's perspective
 			cubeCameras[i].update(renderer, scene);
-
-
-
-
-
 		};
 
 		const time = Date.now() * 0.00005;
@@ -468,10 +448,18 @@ else
 			}
 
 		}
-
-        controls.update();
-		renderer.render(scene, camera);
-		requestAnimationFrame(render);
+		
+		if(orth_camera){
+			//controls.update();
+			renderer.render(scene, Orthcamera);
+			requestAnimationFrame(render);
+		}
+		else{
+			controls.update();
+			renderer.render(scene, Perscamera);
+			requestAnimationFrame(render);
+		}
+        
 	}
 
 
@@ -482,17 +470,17 @@ else
 		let height = window.innerHeight
 
         if (orth_camera) {
-			camera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
-			camera.updateProjectionMatrix();
+			Orthcamera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
+			Orthcamera.updateProjectionMatrix();
 		}
 		else {
-			camera.position.x = width / 2;
-			camera.position.y = height / 2;
+			Perscamera.position.x = width / 2;
+			Perscamera.position.y = height / 2;
 
-			camera.position.z = -1000;
+			Perscamera.position.z = -1000;
 
 			// camera.aspect = window.innerWidth / window.innerHeight;
-			camera.updateProjectionMatrix();
+			Perscamera.updateProjectionMatrix();
 		}
 
 
