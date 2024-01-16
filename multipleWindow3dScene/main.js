@@ -36,6 +36,7 @@ let uiIcons = [];
 let satellite_r = 120; 
 let satellite_angle = 0;	
 
+let orth_camera = false;
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
@@ -83,14 +84,18 @@ else
 
 	function setupScene ()
 	{
+		if (orth_camera) {
+			camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
+			camera.position.z = 2.5;
+		}
+		else {
+			camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
+			camera.position.z = -1000;
+			camera.position.x = window.innerWidth;
+			camera.position.y = window.innerHeight;
+		}
 
-		camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
-		camera.position.z = 2.5;
-
-        // camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-        // camera.position.z = -1000;
-		// camera.position.x = window.innerWidth;
-		// camera.position.y = window.innerHeight;
+        
 
 
 		scene = new t.Scene();
@@ -321,6 +326,7 @@ else
 				mostAttractiveSphere = sphere;
 			}
 
+			_t = 0;
 			satellite.position.x += ( (Math.cos(_t) * satellite_r + mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
 			satellite.position.y += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
 			satellite.position.z += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
@@ -371,19 +377,20 @@ else
 		let width = window.innerWidth;
 		let height = window.innerHeight
 
-        
+        if (orth_camera) {
+			camera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
+			camera.updateProjectionMatrix();
+		}
+		else {
+			camera.position.x = width / 2;
+			camera.position.y = height / 2;
 
-		camera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
-		camera.updateProjectionMatrix();
+			camera.position.z = -1000;
 
-		
-		// camera.position.x = width / 2;
-		// camera.position.y = height / 2;
+			// camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+		}
 
-        // camera.position.z = -1000;
-
-		// // camera.aspect = window.innerWidth / window.innerHeight;
-        // camera.updateProjectionMatrix();
 
 		renderer.setSize( width, height );
 	}
