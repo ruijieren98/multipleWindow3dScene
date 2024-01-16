@@ -38,7 +38,7 @@ let uiIcons = [];
 let satellite_r = 120; 
 let satellite_angle = 0;	
 
-let orth_camera = false;
+let orth_camera = true;
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
@@ -438,6 +438,11 @@ else
 				}
 			}
 			
+			if (orth_camera)
+			{
+				cubeCameras[i].rotation.x = Math.PI ;
+				cubeCameras[i].rotation.y = Math.PI ;
+			}
 
 
 
