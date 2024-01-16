@@ -1,11 +1,13 @@
 import WindowManager from './WindowManager.js'
 import * as THREE from 'three';
-
+import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { LightProbeHelper } from 'three/addons/helpers/LightProbeHelper.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 const t = THREE;
 let camera, scene, renderer, world;
+let ambientLight;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
 let spheres = [];
 let satellites = [];
@@ -102,6 +104,34 @@ else
 		scene.background = new t.Color(0.0);
 		scene.add( camera );
 
+		ambientLight = new t.AmbientLight( 0x404040 ); // soft white light
+		//scene.add( ambientLight );
+
+
+		////////////////////////////////////////////////
+		let starGeometry = new t.BufferGeometry();
+		let vertices = [];
+		for (let i = 0; i < 5000; i++) {
+				let x = Math.random() * 5000 - 2000;
+				let y = Math.random() * 5000 - 2000;
+				let z = Math.random() * 5000 - 2000;
+			//let star = new THREE.Vector3();
+			vertices.push( x, y, z );
+		}
+		starGeometry.setAttribute( 'position', new t.Float32BufferAttribute( vertices, 3 ) );
+		
+		var starMaterial = new THREE.PointsMaterial({
+			size: 10,
+			vertexColors: THREE.VertexColors
+		});
+		
+		var starField = new THREE.Points(starGeometry, starMaterial);
+		scene.add(starField);
+
+		////////////////////////////////////////////
+
+
+
 		renderer = new t.WebGLRenderer({antialias: true, depthBuffer: true});
 		renderer.setPixelRatio(pixR);
 
@@ -130,21 +160,6 @@ else
 
 		// call update windows initially (it will later be called by the win change callback)
 		windowsUpdated();
-
-		// // The sphere start togging when the icon is clicked
-		// ! I want to add listerner here but failed, need to check the class of windowManager, maybe use meta property
-		// let wins = windowManager.getWindows();
-		// wins.forEach((win, index) => {
-		// 	let icon = document.createElement('div');
-		// 	icon.textContent = '⚙️';
-		// 	icon.style.position = 'absolute';
-		// 	icon.style.top = '10px';
-		// 	icon.style.right = '10px';
-		// 	icon.style.cursor = 'pointer';
-		// 	icon.addEventListener('click', () => toggleSphereMovement(index));
-		// 	win.element.appendChild(icon);
-		// 	uiIcons.push(icon);
-		// });
 	}
 
 	function windowsUpdated ()
@@ -194,11 +209,21 @@ else
 			let cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
             cubeCameras.push(cubeCamera)
 
+			const textureLoader = new THREE.TextureLoader();
+			const texture_sphere = textureLoader.load('textures/texture_ball.png');
+
             // set material for each shpere
 			let material = new THREE.MeshStandardMaterial( {
 				envMap: cubeRenderTarget.texture,
+				//map: texture_sphere,
 				roughness: 0.05,
-				metalness: 1
+				metalness: 1,
+				color: 0xffffff,
+			} );
+			let material_T = new THREE.MeshStandardMaterial( {
+				color: 0xfff000, // 金属的颜色
+				metalness: 0.8, // 金属度 0.0 到 1.0 之间
+				roughness: 0.3  // 粗糙度 0.0 到 1.0 之间
 			} );
 
 			let s = 100 + i * 50;
@@ -214,6 +239,10 @@ else
 			world.add(sphere);
 			spheres.push(sphere);
 
+
+			const gui = new GUI();
+			gui.add(sphere.material, "roughness", 0, 1); // roughness
+			gui.add(sphere.material, "metalness", 0, 1); // metalness
 
             //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
@@ -231,6 +260,26 @@ else
 			world.add(satellite);
 
 		}
+	}
+
+	function createParticles(size, color) {
+		let geometry = new THREE.Geometry();
+		for (let i = 0; i < 35000; i++) {
+			let x = -1 + Math.random() * 2;
+			let y = -1 + Math.random() * 2;
+			let z = -1 + Math.random() * 2;
+			let d = 1 / Math.sqrt(x * x + y * y + z * z);
+			x *= d * size;
+			y *= d * size;
+			z *= d * size;
+			geometry.vertices.push(new THREE.Vector3(x, y, z));
+		}
+		let material = new THREE.PointsMaterial({
+			size: 0.1,
+			color: color,
+			transparent: true
+		});
+		return new THREE.Points(geometry, material);
 	}
 
 	function updateWindowShape (easing = true)
@@ -326,7 +375,7 @@ else
 				mostAttractiveSphere = sphere;
 			}
 
-			_t = 0;
+			//_t = 0;
 			satellite.position.x += ( (Math.cos(_t) * satellite_r + mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
 			satellite.position.y += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
 			satellite.position.z += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
@@ -355,8 +404,38 @@ else
 			
 			if (orth_camera)
 			{
-				cubeCameras[i].rotation.x = Math.PI ;
-				cubeCameras[i].rotation.y = Math.PI ;
+				let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
+
+				sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
+				sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
+
+				sphere.rotation.x = _t * .5;
+				sphere.rotation.y = _t * .3;
+
+				axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
+				axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
+
+				cubeCameras[i].position.copy(axesHelpers[i].position);
+				cubeCameras[i].update( renderer, scene );
+
+				//cursor event
+				const raycaster = new THREE.Raycaster();
+				const mouse = new THREE.Vector2();
+				function onMouseMove(event) {
+				// 将鼠标位置转换为归一化设备坐标(-1 到 +1)
+				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+				mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+				}
+				window.addEventListener('mousemove', onMouseMove, false);
+
+				raycaster.setFromCamera(mouse, camera);
+    			const intersects = raycaster.intersectObjects([sphere]);
+    			// 处理相交对象
+				if (intersects.length > 0) {
+					// 鼠标在球体上
+					console.log("鼠标在球体上");
+					//sphere.material.color.set( 0x00ff00 );
+				}
 			}
 			
 
@@ -371,6 +450,19 @@ else
 
 
 		};
+
+		const time = Date.now() * 0.00005;
+		for ( let i = 0; i < scene.children.length; i ++ ) {
+
+			const object = scene.children[ i ];
+
+			if ( object instanceof THREE.Points ) {
+
+				object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+
+			}
+
+		}
 
         controls.update();
 		renderer.render(scene, camera);
