@@ -355,6 +355,7 @@ else
 			
 			if (orth_camera)
 			{
+				cubeCameras[i].rotation.x = Math.PI ;
 				cubeCameras[i].rotation.y = Math.PI ;
 			}
 			
