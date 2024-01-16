@@ -352,6 +352,12 @@ else
 			cubeCameras[i].position.x = world.position.x + sphere.position.x;
 			cubeCameras[i].position.y = world.position.y + sphere.position.y;
 			cubeCameras[i].position.z = world.position.z + sphere.position.z;
+			
+			if (orth_camera)
+			{
+				cubeCameras[i].rotation.y = Math.PI ;
+			}
+			
 
 
 
