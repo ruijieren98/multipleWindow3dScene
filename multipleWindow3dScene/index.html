@@ -2,9 +2,6 @@
 <html lang="en">
 <head>
 	<title>3d example using three.js and multiple windows</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-
-
 	<style type="text/css">
 		
 		*
@@ -14,9 +11,48 @@
 		}
 
 	</style>
+	<link type="text/css" rel="stylesheet" href="main.css">
 </head>
-<body>
+<body>	
+	<div id="container"></div>
+		<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - buffergeometry custom attributes - particles</div>
+
+		<script type="x-shader/x-vertex" id="vertexshader">
+
+			attribute float size;
 	
-	<script type="module" src="main.js"></script>
+			varying vec3 vColor;
+	
+			void main() {
+	
+				vColor = color;
+	
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+	
+				gl_PointSize = size * ( 10.0 / -mvPosition.z );
+	
+				gl_Position = projectionMatrix * mvPosition;
+	
+			}
+	
+		</script>
+	
+		<script type="x-shader/x-fragment" id="fragmentshader">
+	
+			uniform sampler2D pointTexture;
+	
+			varying vec3 vColor;
+	
+			void main() {
+	
+				gl_FragColor = vec4( vColor, 1.0 );
+	
+				gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+	
+			}
+	
+		</script>
+
+	<script type="module" src="exp.js"></script>
 </body>
 </html>
