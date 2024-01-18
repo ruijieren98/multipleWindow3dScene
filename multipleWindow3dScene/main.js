@@ -4,6 +4,7 @@ import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { LightProbeHelper } from 'three/addons/helpers/LightProbeHelper.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
 const t = THREE;
 let camera, scene, renderer, world;
@@ -11,6 +12,9 @@ let ambientLight;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
 let spheres = [];
 let satellites = [];
+let shinyStar_stats;
+let shinyStar_particleSystem, shinyStar_uniforms, shinyStar_geometry;
+let shinyStar_particles = 10000;
 
 let sceneOffsetTarget = {x: 0, y: 0};
 let sceneOffset = {x: 0, y: 0};
@@ -39,6 +43,10 @@ let satellite_r = 120;
 let satellite_angle = 0;	
 
 let orth_camera = true;
+let gui = new GUI();
+
+let Orthcamera;
+let Perscamera;
 
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
@@ -72,7 +80,7 @@ else
 	function init ()
 	{
 		initialized = true;
-
+		
 		// add a short timeout because window.offsetX reports wrong values before a short period 
 		setTimeout(() => {
 			setupScene();
@@ -86,43 +94,41 @@ else
 
 	function setupScene ()
 	{
-		if (orth_camera) {
-			camera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
-			camera.position.z = 2.5;
-		}
-		else {
-			camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
-			camera.position.z = -1000;
-			camera.position.x = window.innerWidth;
-			camera.position.y = window.innerHeight;
-		}
 
-        
+		Orthcamera = new t.OrthographicCamera(0, 0, window.innerWidth, window.innerHeight, -10000, 10000);
+		Orthcamera.position.z = 2.5;
 
+		Perscamera = new t.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 10000 );
+		Perscamera.position.z = -1000;
+		Perscamera.position.x = window.innerWidth;
+		Perscamera.position.y = window.innerHeight;
 
 		scene = new t.Scene();
 		scene.background = new t.Color(0.0);
-		scene.add( camera );
+		//scene.add( camera );
+		scene.add( Perscamera );
+		scene.add( Orthcamera );
 
-		ambientLight = new t.AmbientLight( 0x404040 ); // soft white light
-		//scene.add( ambientLight );
-
-
-		////////////////////////////////////////////////
+		//////////////////////////////////////////////// particle system
 		let starGeometry = new t.BufferGeometry();
 		let vertices = [];
 		for (let i = 0; i < 5000; i++) {
 				let x = Math.random() * 5000 - 2000;
 				let y = Math.random() * 5000 - 2000;
 				let z = Math.random() * 5000 - 2000;
-			//let star = new THREE.Vector3();
 			vertices.push( x, y, z );
 		}
 		starGeometry.setAttribute( 'position', new t.Float32BufferAttribute( vertices, 3 ) );
 		
+		const star_textureLoader = new THREE.TextureLoader();
+		const star_texture = star_textureLoader.load('textures/star.png');
+
 		var starMaterial = new THREE.PointsMaterial({
-			size: 10,
-			vertexColors: THREE.VertexColors
+			size: 5,
+			vertexColors: THREE.VertexColors,
+			map:star_texture,
+			transparent: true,
+			alphaTest: 0.5
 		});
 		
 		var starField = new THREE.Points(starGeometry, starMaterial);
@@ -130,19 +136,79 @@ else
 
 		////////////////////////////////////////////
 
+		shinyStar_uniforms = {
 
+			pointTexture: { value: new t.TextureLoader().load( 'textures/sprites/spark1.png' ) }
+
+		};
+
+		const shinyStar_shaderMaterial = new t.ShaderMaterial( {
+
+			uniforms: shinyStar_uniforms,
+			vertexShader: document.getElementById( 'vertexshader' ).textContent,
+			fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+
+			blending: THREE.AdditiveBlending,
+			depthTest: false,
+			transparent: true,
+			vertexColors: true
+
+		} );
+
+		const shinyStar_radius = 1500;
+
+		shinyStar_geometry = new t.BufferGeometry();
+
+		const shinyStar_positions = [];
+		const shinyStar_colors = [];
+		const shinyStar_sizes = [];
+
+		const shinyStar_color = new t.Color();
+
+			for ( let i = 0; i < shinyStar_particles; i ++ ) {
+
+				shinyStar_positions.push( ( Math.random() * 2 - 1 ) * shinyStar_radius );
+				shinyStar_positions.push( ( Math.random() * 2 - 1 ) * shinyStar_radius );
+				shinyStar_positions.push( ( Math.random() * 2 - 1 ) * shinyStar_radius );
+
+				shinyStar_color.setHSL( i / shinyStar_particles, 1.0, 0.5 );
+
+				shinyStar_colors.push( shinyStar_color.r, shinyStar_color.g, shinyStar_color.b );
+
+				shinyStar_sizes.push( 20 );
+
+			}
+
+		shinyStar_geometry.setAttribute( 'position', new t.Float32BufferAttribute( shinyStar_positions, 3 ) );
+		shinyStar_geometry.setAttribute( 'color', new t.Float32BufferAttribute( shinyStar_colors, 3 ) );
+		shinyStar_geometry.setAttribute( 'size', new t.Float32BufferAttribute( shinyStar_sizes, 1 ).setUsage( THREE.DynamicDrawUsage ) );
+
+		shinyStar_particleSystem = new t.Points( shinyStar_geometry, shinyStar_shaderMaterial );
+		shinyStar_particleSystem.rotation.y = Math.PI ;
+
+		scene.add( shinyStar_particleSystem );				
+
+		////////////////////////////////////////////
+
+		world = new t.Object3D();
+		scene.add(world);
 
 		renderer = new t.WebGLRenderer({antialias: true, depthBuffer: true});
 		renderer.setPixelRatio(pixR);
-
-	  	world = new t.Object3D();
-		scene.add(world);
-
+	  	
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
 
-        controls = new OrbitControls( camera, renderer.domElement );
-        controls.autoRotate = false;
+		const container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
+
+				shinyStar_stats = new Stats();
+				container.appendChild( shinyStar_stats.dom );
+
+		//controls = new OrbitControls( Orthcamera, renderer.domElement );
+
+		controls = new OrbitControls( Perscamera, renderer.domElement );
+		controls.autoRotate = false;
 		controls.enableRotate = true;
 	}
 
@@ -209,21 +275,13 @@ else
 			let cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
             cubeCameras.push(cubeCamera)
 
-			const textureLoader = new THREE.TextureLoader();
-			const texture_sphere = textureLoader.load('textures/texture_ball.png');
-
             // set material for each shpere
 			let material = new THREE.MeshStandardMaterial( {
 				envMap: cubeRenderTarget.texture,
 				//map: texture_sphere,
-				roughness: 0.05,
+				roughness: 0.14,
 				metalness: 1,
-				color: 0xffffff,
-			} );
-			let material_T = new THREE.MeshStandardMaterial( {
-				color: 0xfff000, // 金属的颜色
-				metalness: 0.8, // 金属度 0.0 到 1.0 之间
-				roughness: 0.3  // 粗糙度 0.0 到 1.0 之间
+				color: 0xc188c8,
 			} );
 
 			let s = 100 + i * 50;
@@ -239,10 +297,21 @@ else
 			world.add(sphere);
 			spheres.push(sphere);
 
-
-			const gui = new GUI();
-			gui.add(sphere.material, "roughness", 0, 1); // roughness
-			gui.add(sphere.material, "metalness", 0, 1); // metalness
+			
+			gui.add(sphere.material, "roughness", 0, 1); // change roughness
+			gui.add(sphere.material, "metalness", 0, 1); // change metalness
+			var color = {
+				color: '#c188c8'
+			};
+			gui.addColor(color, 'color').onChange(function(newValue) {
+				// change color
+				sphere.material.color.set(newValue);
+			});
+			//gui.add(orth_camera, 'orth_camera');
+			gui.add({orth_camera}, 'orth_camera').name('2D/3D').onChange(function(newValue) {
+				orth_camera = !orth_camera;
+				//console.log("x 的新值为:", orth_camera);
+			});
 
             //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
@@ -258,7 +327,6 @@ else
 			satellites.push(satellite);
 			
 			world.add(satellite);
-
 		}
 	}
 
@@ -409,33 +477,14 @@ else
 				sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
 				sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
 
-				sphere.rotation.x = _t * .5;
-				sphere.rotation.y = _t * .3;
+				//sphere.rotation.x = _t * .5;
+				//sphere.rotation.y = _t * .3;
 
 				axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
 				axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
 
 				cubeCameras[i].position.copy(axesHelpers[i].position);
 				cubeCameras[i].update( renderer, scene );
-
-				//cursor event
-				const raycaster = new THREE.Raycaster();
-				const mouse = new THREE.Vector2();
-				function onMouseMove(event) {
-				// 将鼠标位置转换为归一化设备坐标(-1 到 +1)
-				mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-				mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-				}
-				window.addEventListener('mousemove', onMouseMove, false);
-
-				raycaster.setFromCamera(mouse, camera);
-    			const intersects = raycaster.intersectObjects([sphere]);
-    			// 处理相交对象
-				if (intersects.length > 0) {
-					// 鼠标在球体上
-					console.log("鼠标在球体上");
-					//sphere.material.color.set( 0x00ff00 );
-				}
 			}
 			
 			if (orth_camera)
@@ -443,35 +492,60 @@ else
 				cubeCameras[i].rotation.x = Math.PI ;
 				cubeCameras[i].rotation.y = Math.PI ;
 			}
-
-
+			else{
+				cubeCameras[i].rotation.x = 0 ;
+				cubeCameras[i].rotation.y = 0 ;
+			}
 
 			// Update the cube camera with the current renderer and scene
 			// This is typically done to render the scene from the camera's perspective
 			cubeCameras[i].update(renderer, scene);
-
-
-
-
-
 		};
 
+		//////////////////////////////////////////
+
 		const time = Date.now() * 0.00005;
-		for ( let i = 0; i < scene.children.length; i ++ ) {
+		// for ( let i = 0; i < scene.children.length; i ++ ) {
 
-			const object = scene.children[ i ];
+		// 	const object = scene.children[ i ];
 
-			if ( object instanceof THREE.Points ) {
+		// 	if ( object instanceof THREE.Points ) {
 
-				object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+		// 		object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
 
-			}
+		// 	}
 
+		// }
+
+		////////////////////////
+		const shinyStar_time = Date.now() * 0.005;
+
+				shinyStar_particleSystem.rotation.y = 0.1 * shinyStar_time;
+
+				const shinyStar_sizes = shinyStar_geometry.attributes.size.array;
+
+				for ( let i = 0; i < shinyStar_particles; i ++ ) {
+
+					shinyStar_sizes[ i ] = 1 * ( 1 + Math.sin( 0.1 * i + shinyStar_time ) );
+
+				}
+
+				shinyStar_geometry.attributes.size.needsUpdate = true;
+		///////////////////////
+		
+		if(orth_camera){
+			//controls.update();
+			renderer.render(scene, Orthcamera);
+			requestAnimationFrame(render);
+			shinyStar_stats.update();
 		}
-
-        controls.update();
-		renderer.render(scene, camera);
-		requestAnimationFrame(render);
+		else{
+			controls.update();
+			renderer.render(scene, Perscamera);
+			requestAnimationFrame(render);
+			shinyStar_stats.update();
+		}
+        
 	}
 
 
@@ -482,17 +556,17 @@ else
 		let height = window.innerHeight
 
         if (orth_camera) {
-			camera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
-			camera.updateProjectionMatrix();
+			Orthcamera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
+			Orthcamera.updateProjectionMatrix();
 		}
 		else {
-			camera.position.x = width / 2;
-			camera.position.y = height / 2;
+			Perscamera.position.x = width / 2;
+			Perscamera.position.y = height / 2;
 
-			camera.position.z = -1000;
+			Perscamera.position.z = -1000;
 
 			// camera.aspect = window.innerWidth / window.innerHeight;
-			camera.updateProjectionMatrix();
+			Perscamera.updateProjectionMatrix();
 		}
 
 
