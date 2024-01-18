@@ -4,6 +4,7 @@ import { GUI } from "three/examples/jsm/libs/lil-gui.module.min.js";
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { LightProbeHelper } from 'three/addons/helpers/LightProbeHelper.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+import Stats from 'three/addons/libs/stats.module.js';
 
 const t = THREE;
 let camera, scene, renderer, world;
@@ -11,6 +12,9 @@ let ambientLight;
 let pixR = window.devicePixelRatio ? window.devicePixelRatio : 1;
 let spheres = [];
 let satellites = [];
+let shinyStar_stats;
+let shinyStar_particleSystem, shinyStar_uniforms, shinyStar_geometry;
+let shinyStar_particles = 10000;
 
 let sceneOffsetTarget = {x: 0, y: 0};
 let sceneOffset = {x: 0, y: 0};
@@ -116,13 +120,73 @@ else
 		}
 		starGeometry.setAttribute( 'position', new t.Float32BufferAttribute( vertices, 3 ) );
 		
+		const star_textureLoader = new THREE.TextureLoader();
+		const star_texture = star_textureLoader.load('textures/star.png');
+
 		var starMaterial = new THREE.PointsMaterial({
-			size: 10,
-			vertexColors: THREE.VertexColors
+			size: 5,
+			vertexColors: THREE.VertexColors,
+			map:star_texture,
+			transparent: true,
+			alphaTest: 0.5
 		});
 		
 		var starField = new THREE.Points(starGeometry, starMaterial);
 		scene.add(starField);
+
+		////////////////////////////////////////////
+
+		shinyStar_uniforms = {
+
+			pointTexture: { value: new t.TextureLoader().load( 'textures/sprites/spark1.png' ) }
+
+		};
+
+		const shinyStar_shaderMaterial = new t.ShaderMaterial( {
+
+			uniforms: shinyStar_uniforms,
+			vertexShader: document.getElementById( 'vertexshader' ).textContent,
+			fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+
+			blending: THREE.AdditiveBlending,
+			depthTest: false,
+			transparent: true,
+			vertexColors: true
+
+		} );
+
+		const shinyStar_radius = 1500;
+
+		shinyStar_geometry = new t.BufferGeometry();
+
+		const shinyStar_positions = [];
+		const shinyStar_colors = [];
+		const shinyStar_sizes = [];
+
+		const shinyStar_color = new t.Color();
+
+			for ( let i = 0; i < shinyStar_particles; i ++ ) {
+
+				shinyStar_positions.push( ( Math.random() * 2 - 1 ) * shinyStar_radius );
+				shinyStar_positions.push( ( Math.random() * 2 - 1 ) * shinyStar_radius );
+				shinyStar_positions.push( ( Math.random() * 2 - 1 ) * shinyStar_radius );
+
+				shinyStar_color.setHSL( i / shinyStar_particles, 1.0, 0.5 );
+
+				shinyStar_colors.push( shinyStar_color.r, shinyStar_color.g, shinyStar_color.b );
+
+				shinyStar_sizes.push( 20 );
+
+			}
+
+		shinyStar_geometry.setAttribute( 'position', new t.Float32BufferAttribute( shinyStar_positions, 3 ) );
+		shinyStar_geometry.setAttribute( 'color', new t.Float32BufferAttribute( shinyStar_colors, 3 ) );
+		shinyStar_geometry.setAttribute( 'size', new t.Float32BufferAttribute( shinyStar_sizes, 1 ).setUsage( THREE.DynamicDrawUsage ) );
+
+		shinyStar_particleSystem = new t.Points( shinyStar_geometry, shinyStar_shaderMaterial );
+		shinyStar_particleSystem.rotation.y = Math.PI ;
+
+		scene.add( shinyStar_particleSystem );				
 
 		////////////////////////////////////////////
 
@@ -134,6 +198,12 @@ else
 	  	
 		renderer.domElement.setAttribute("id", "scene");
 		document.body.appendChild( renderer.domElement );
+
+		const container = document.getElementById( 'container' );
+				container.appendChild( renderer.domElement );
+
+				shinyStar_stats = new Stats();
+				container.appendChild( shinyStar_stats.dom );
 
 		//controls = new OrbitControls( Orthcamera, renderer.domElement );
 
@@ -205,9 +275,6 @@ else
 			let cubeCamera = new THREE.CubeCamera( 1, 1000, cubeRenderTarget );
             cubeCameras.push(cubeCamera)
 
-			const textureLoader = new THREE.TextureLoader();
-			const texture_sphere = textureLoader.load('textures/texture_ball.png');
-
             // set material for each shpere
 			let material = new THREE.MeshStandardMaterial( {
 				envMap: cubeRenderTarget.texture,
@@ -243,8 +310,7 @@ else
 			//gui.add(orth_camera, 'orth_camera');
 			gui.add({orth_camera}, 'orth_camera').name('2D/3D').onChange(function(newValue) {
 				orth_camera = !orth_camera;
-				console.log("x 的新值为:", orth_camera);
-				//CameraDetermination();
+				//console.log("x 的新值为:", orth_camera);
 			});
 
             //axes helper for debug use
@@ -411,8 +477,8 @@ else
 				sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
 				sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
 
-				sphere.rotation.x = _t * .5;
-				sphere.rotation.y = _t * .3;
+				//sphere.rotation.x = _t * .5;
+				//sphere.rotation.y = _t * .3;
 
 				axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
 				axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
@@ -436,28 +502,48 @@ else
 			cubeCameras[i].update(renderer, scene);
 		};
 
+		//////////////////////////////////////////
+
 		const time = Date.now() * 0.00005;
-		for ( let i = 0; i < scene.children.length; i ++ ) {
+		// for ( let i = 0; i < scene.children.length; i ++ ) {
 
-			const object = scene.children[ i ];
+		// 	const object = scene.children[ i ];
 
-			if ( object instanceof THREE.Points ) {
+		// 	if ( object instanceof THREE.Points ) {
 
-				object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
+		// 		object.rotation.y = time * ( i < 4 ? i + 1 : - ( i + 1 ) );
 
-			}
+		// 	}
 
-		}
+		// }
+
+		////////////////////////
+		const shinyStar_time = Date.now() * 0.005;
+
+				shinyStar_particleSystem.rotation.y = 0.1 * shinyStar_time;
+
+				const shinyStar_sizes = shinyStar_geometry.attributes.size.array;
+
+				for ( let i = 0; i < shinyStar_particles; i ++ ) {
+
+					shinyStar_sizes[ i ] = 1 * ( 1 + Math.sin( 0.1 * i + shinyStar_time ) );
+
+				}
+
+				shinyStar_geometry.attributes.size.needsUpdate = true;
+		///////////////////////
 		
 		if(orth_camera){
 			//controls.update();
 			renderer.render(scene, Orthcamera);
 			requestAnimationFrame(render);
+			shinyStar_stats.update();
 		}
 		else{
 			controls.update();
 			renderer.render(scene, Perscamera);
 			requestAnimationFrame(render);
+			shinyStar_stats.update();
 		}
         
 	}
