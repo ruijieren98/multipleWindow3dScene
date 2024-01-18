@@ -31,6 +31,8 @@ let windowManager;
 let initialized = false;
 let axesHelpers = [];
 let axesHelpers_satellites = [];
+let sphereHelpers = [];
+
 
 
 let cubeCameras = [];
@@ -250,6 +252,7 @@ else
 		spheres = [];
         cubeCameras = [];
 		satellites = [];
+		sphereHelpers = [];
 
 		// add new spheres based on the current window setup
 		for (let i = 0; i < wins.length; i++)
@@ -324,9 +327,16 @@ else
 
 
 			let satellite = new THREE.Mesh( new t.SphereGeometry(16, 16, 16), new THREE.MeshBasicMaterial({color: c , wireframe: true}) );
+			satellite.rotate_r = satellite_r;
 			satellites.push(satellite);
-			
 			world.add(satellite);
+
+
+			let sphereHelper = new THREE.Mesh( new t.SphereGeometry(s, 32, 32), new THREE.MeshBasicMaterial({color: 0xc188c8 , wireframe: true}) );
+			sphereHelpers.push(sphereHelper)
+			world.add(sphereHelper);
+
+			
 		}
 	}
 
@@ -433,6 +443,8 @@ else
 				sphere.rotation.z
 			);
 
+			sphereHelpers[i].position.copy(sphere.position)
+
 			// Update the position of a satellite object
 			// The satellite orbits around the sphere in a circular path
 			// 'satellite_r' is the radius of the orbit
@@ -443,7 +455,8 @@ else
 				mostAttractiveSphere = sphere;
 			}
 
-			//_t = 0;
+			_t = 0;
+			satellite_r = sphere.radius * 2;
 			satellite.position.x += ( (Math.cos(_t) * satellite_r + mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
 			satellite.position.y += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
 			satellite.position.z += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
@@ -470,22 +483,12 @@ else
 			cubeCameras[i].position.y = world.position.y + sphere.position.y;
 			cubeCameras[i].position.z = world.position.z + sphere.position.z;
 			
-			if (orth_camera)
-			{
-				let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
+			
+			cubeCameras[i].update( renderer, scene );
 
-				sphere.position.x = sphere.position.x + (posTarget.x - sphere.position.x) * falloff;
-				sphere.position.y = sphere.position.y + (posTarget.y - sphere.position.y) * falloff;
+			sphereHelpers[i].position.copy(sphere.position)
 
-				//sphere.rotation.x = _t * .5;
-				//sphere.rotation.y = _t * .3;
-
-				axesHelpers[i].position.set(world.position.x + sphere.position.x, world.position.y + sphere.position.y,0);
-				axesHelpers[i].rotation.set(sphere.rotation.x,sphere.rotation.y,sphere.rotation.z);
-
-				cubeCameras[i].position.copy(axesHelpers[i].position);
-				cubeCameras[i].update( renderer, scene );
-			}
+			
 			
 			if (orth_camera)
 			{
