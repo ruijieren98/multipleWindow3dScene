@@ -403,8 +403,8 @@ else
 					mostAttractiveSphereChanged = true;
 					let sphericalCoords = calculateSphericalCoordinates(satellite, sphere);
 					satellite.sphericalOffset = {
-						thetaOffset: currentTime - sphericalCoords.theta,
-						phiOffset: currentTime - sphericalCoords.phi
+						thetaOffset: sphericalCoords.theta - currentTime,
+						phiOffset: sphericalCoords.phi - currentTime
 					};
 				}
 				satellite.previousAttractionValue = attractionField;
