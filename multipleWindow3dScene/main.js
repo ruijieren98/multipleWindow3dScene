@@ -34,7 +34,6 @@ let axesHelpers_satellites = [];
 let sphereHelpers = [];
 
 
-
 let cubeCameras = [];
 let materials = [];
 let controls;
@@ -332,7 +331,7 @@ else
 			let satellite = new THREE.Mesh( new t.SphereGeometry(16, 16, 16), new THREE.MeshBasicMaterial({color: c , wireframe: true}) );
 			satellite.previousAttractionValue = calculateAttraction(sphere);
 			satellite.mostAttractiveSphere = sphere;
-			satellite.orbit_radius = sphere.attractionField * 0.95;
+			satellite.orbit_radius = sphere.attractionField * 0.99;
 			satellite.custom_id = i;
 			satellites.push(satellite);
 			world.add(satellite);
@@ -385,8 +384,8 @@ else
 		let dz = satellite.position.z - sphere.position.z;
 		let r = Math.sqrt(dx*dx + dy*dy + dz*dz);
 	
-		let theta = Math.acos(dz / r); // 仰角
-		let phi = Math.atan2(dy, dx);   // 方位角
+		let theta = Math.atan(dy / dx); 
+		let phi = Math.atan(dz / (dx*dx + dy*dy) ** 0.5); 
 	
 		return { r, theta, phi };
 	}
@@ -483,7 +482,7 @@ else
 
 			// Update satellite position with offset
 			let adjustedTheta = t + satellite.sphericalOffset.thetaOffset;
-			let adjustedPhi = t + satellite.sphericalOffset.phiOffset;
+			let adjustedPhi = t * 0.1 + satellite.sphericalOffset.phiOffset;
 			let x = satellite.mostAttractiveSphere.position.x + satellite.orbit_radius * Math.sin(adjustedTheta) * Math.cos(adjustedPhi);
 			let y = satellite.mostAttractiveSphere.position.y + satellite.orbit_radius * Math.sin(adjustedTheta) * Math.sin(adjustedPhi);
 			let z = satellite.mostAttractiveSphere.position.z + satellite.orbit_radius * Math.cos(adjustedTheta);
