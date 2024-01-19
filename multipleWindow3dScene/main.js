@@ -379,22 +379,43 @@ else
 		return sphere.radius * 2; // 或者其他基于半径的公式
 	}
 	
-	function updateMostAttractiveSphere(satellite, spheres) {
-
-		for (let i = 0; i < spheres.length; i++)
-		{	
+	function calculateSphericalCoordinates(satellite, sphere) {
+		let dx = satellite.position.x - sphere.position.x;
+		let dy = satellite.position.y - sphere.position.y;
+		let dz = satellite.position.z - sphere.position.z;
+		let r = Math.sqrt(dx*dx + dy*dy + dz*dz);
+	
+		let theta = Math.acos(dz / r); // 仰角
+		let phi = Math.atan2(dy, dx);   // 方位角
+	
+		return { r, theta, phi };
+	}
+	
+	function updateMostAttractiveSphere(satellite, spheres, currentTime) {
+		let mostAttractiveSphereChanged = false;
+	
+		for (let i = 0; i < spheres.length; i++) {    
 			let sphere = spheres[i];
 			let distance = satellite.position.distanceTo(sphere.position);
 			let attractionField = sphere.attractionField;
 	
-			if ( (distance-attractionField) < 0.01 && attractionField >= satellite.previousAttractionValue) {
+			if ((distance - attractionField) < 0.01 && attractionField >= satellite.previousAttractionValue) {
+				if (satellite.mostAttractiveSphere !== sphere) {
+					mostAttractiveSphereChanged = true;
+					let sphericalCoords = calculateSphericalCoordinates(satellite, sphere);
+					satellite.sphericalOffset = {
+						thetaOffset: currentTime - sphericalCoords.theta,
+						phiOffset: currentTime - sphericalCoords.phi
+					};
+				}
 				satellite.previousAttractionValue = attractionField;
 				satellite.mostAttractiveSphere = sphere;
 				satellite.orbit_radius = sphere.attractionField * 0.95;
 			}
-			
-			
-			
+		}
+	
+		if (!mostAttractiveSphereChanged) {
+			satellite.sphericalOffset = satellite.sphericalOffset || { thetaOffset: 0, phiOffset: 0 };
 		}
 	
 		return satellite;
@@ -426,7 +447,7 @@ else
 		{
 			let sphere = spheres[i];
 			let win = wins[i];
-			let _t = t //+ i * .2;
+			let _t = t + i * .2;
 
 			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
 
@@ -458,14 +479,19 @@ else
 			// Update the position of a satellite object
 			// The satellite orbits around the sphere in a circular path
 			let satellite = satellites[i];
-			satellite = updateMostAttractiveSphere(satellite, spheres);
-			
+			satellite = updateMostAttractiveSphere(satellite, spheres, t);
 
-			// _t = 0;
-			satellite.position.x += ( (Math.cos(_t) * satellite.orbit_radius + satellite.mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
-			satellite.position.y += ( (Math.sin(_t) * satellite.orbit_radius + satellite.mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
-			satellite.position.z += ( (Math.sin(_t) * satellite.orbit_radius + satellite.mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
-			
+			// Update satellite position with offset
+			let adjustedTheta = t + satellite.sphericalOffset.thetaOffset;
+			let adjustedPhi = t + satellite.sphericalOffset.phiOffset;
+			let x = satellite.mostAttractiveSphere.position.x + satellite.orbit_radius * Math.sin(adjustedTheta) * Math.cos(adjustedPhi);
+			let y = satellite.mostAttractiveSphere.position.y + satellite.orbit_radius * Math.sin(adjustedTheta) * Math.sin(adjustedPhi);
+			let z = satellite.mostAttractiveSphere.position.z + satellite.orbit_radius * Math.cos(adjustedTheta);
+
+			satellite.position.x += (x - satellite.position.x) * falloff;
+			satellite.position.y += (y - satellite.position.y) * falloff;
+			satellite.position.z += (z - satellite.position.z) * falloff;
+
 			satellites[i] = satellite;
 			
 
