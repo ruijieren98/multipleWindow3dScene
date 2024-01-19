@@ -298,6 +298,7 @@ else
 			sphere.winId = wins[i].id;  // link sphere with window
 			sphere.radius = s / 2;
 			sphere.attractionField = calculateAttraction(sphere);
+			sphere.custom_id = i;
 
 			world.add(sphere);
 			spheres.push(sphere);
@@ -331,6 +332,8 @@ else
 			let satellite = new THREE.Mesh( new t.SphereGeometry(16, 16, 16), new THREE.MeshBasicMaterial({color: c , wireframe: true}) );
 			satellite.previousAttractionValue = calculateAttraction(sphere);
 			satellite.mostAttractiveSphere = sphere;
+			satellite.orbit_radius = sphere.attractionField * 0.95;
+			satellite.custom_id = i;
 			satellites.push(satellite);
 			world.add(satellite);
 
@@ -387,7 +390,10 @@ else
 			if ( (distance-attractionField) < 0.01 && attractionField >= satellite.previousAttractionValue) {
 				satellite.previousAttractionValue = attractionField;
 				satellite.mostAttractiveSphere = sphere;
+				satellite.orbit_radius = sphere.attractionField * 0.95;
 			}
+			
+			
 			
 		}
 	
@@ -420,7 +426,7 @@ else
 		{
 			let sphere = spheres[i];
 			let win = wins[i];
-			let _t = t + i * .2;
+			let _t = t //+ i * .2;
 
 			let posTarget = {x: win.shape.x + (win.shape.w * .5), y: win.shape.y + (win.shape.h * .5)} // center of the the inner window
 
@@ -451,17 +457,14 @@ else
 
 			// Update the position of a satellite object
 			// The satellite orbits around the sphere in a circular path
-			// 'satellite_r' is the radius of the orbit
 			let satellite = satellites[i];
 			satellite = updateMostAttractiveSphere(satellite, spheres);
 			
 
 			// _t = 0;
-			let satellite_r = satellite.mostAttractiveSphere.attractionField * 0.95;
-			console.log("satellite_r: ", satellite_r);
-			satellite.position.x += ( (Math.cos(_t) * satellite_r + satellite.mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
-			satellite.position.y += ( (Math.sin(_t) * satellite_r + satellite.mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
-			satellite.position.z += ( (Math.sin(_t) * satellite_r + satellite.mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
+			satellite.position.x += ( (Math.cos(_t) * satellite.orbit_radius + satellite.mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
+			satellite.position.y += ( (Math.sin(_t) * satellite.orbit_radius + satellite.mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
+			satellite.position.z += ( (Math.sin(_t) * satellite.orbit_radius + satellite.mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
 			
 			satellites[i] = satellite;
 			
