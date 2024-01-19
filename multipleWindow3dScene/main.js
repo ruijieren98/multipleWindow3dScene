@@ -41,9 +41,6 @@ let controls;
 
 let uiIcons = [];
 
-let satellite_r = 120; 
-let satellite_angle = 0;	
-
 let orth_camera = true;
 let gui = new GUI();
 
@@ -249,6 +246,10 @@ else
 			world.remove(c);
 		})
 
+		sphereHelpers.forEach((c) => {
+			world.remove(c);
+		})
+
 		spheres = [];
         cubeCameras = [];
 		satellites = [];
@@ -296,6 +297,7 @@ else
 
 			sphere.winId = wins[i].id;  // link sphere with window
 			sphere.radius = s / 2;
+			sphere.attractionField = calculateAttraction(sphere);
 
 			world.add(sphere);
 			spheres.push(sphere);
@@ -327,7 +329,7 @@ else
 
 
 			let satellite = new THREE.Mesh( new t.SphereGeometry(16, 16, 16), new THREE.MeshBasicMaterial({color: c , wireframe: true}) );
-			satellite.rotate_r = satellite_r;
+			satellite.previousAttractionValue = calculateAttraction(sphere);
 			satellites.push(satellite);
 			world.add(satellite);
 
@@ -374,18 +376,19 @@ else
 	}
 	
 	function findMostAttractiveSphere(satellite, spheres) {
-		let maxAttraction = 0;
 		let mostAttractiveSphere = null;
-	
-		spheres.forEach(sphere => {
+
+		for (let i = 0; i < spheres.length; i++)
+		{	
+			let sphere = spheres[i];
 			let distance = satellite.position.distanceTo(sphere.position);
-			let attractionField = calculateAttraction(sphere);
+			let attractionField = sphere.attractionField;
 	
-			if (distance < attractionField && attractionField > maxAttraction) {
-				maxAttraction = attractionField;
+			if ( (distance-attractionField) < 0.01 && attractionField >= satellite.previousAttractionValue) {
+				satellite.previousAttractionValue = attractionField;
 				mostAttractiveSphere = sphere;
 			}
-		});
+		}
 	
 		return mostAttractiveSphere;
 	}
@@ -455,13 +458,14 @@ else
 				mostAttractiveSphere = sphere;
 			}
 
-			_t = 0;
-			satellite_r = sphere.radius * 2;
+			// _t = 0;
+			let satellite_r = mostAttractiveSphere.attractionField * 0.95;
+			console.log("satellite_r: ", satellite_r);
 			satellite.position.x += ( (Math.cos(_t) * satellite_r + mostAttractiveSphere.position.x) - satellite.position.x ) * falloff;
 			satellite.position.y += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.y) - satellite.position.y ) * falloff;
 			satellite.position.z += ( (Math.sin(_t) * satellite_r + mostAttractiveSphere.position.z) - satellite.position.z ) * falloff;
 			
-			
+			satellites[i].previousAttractionValue = satellite.previousAttractionValue;
 
 			// Update the position and rotation of an axes helper for the satellite
 			// This is likely for visualizing the orientation of the satellite
