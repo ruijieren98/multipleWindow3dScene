@@ -526,6 +526,17 @@ else
 
 			sphereHelpers[i].position.copy(sphere.position)
 
+			
+			
+			if (orth_camera)
+			{
+				cubeCameras[i].rotation.x = Math.PI ;
+				cubeCameras[i].rotation.y = Math.PI ;
+			}
+			else{
+				cubeCameras[i].rotation.x = 0 ;
+				cubeCameras[i].rotation.y = 0 ;
+			}
 
 			// Update the cube camera with the current renderer and scene
 			// This is typically done to render the scene from the camera's perspective
@@ -586,15 +597,16 @@ else
 		let height = window.innerHeight
 
         if (orth_camera) {
-			Orthcamera = new t.OrthographicCamera(0, width, height, 0, -10000, 10000);
+			Orthcamera = new t.OrthographicCamera(0, width, 0, height, -10000, 10000);
 			Orthcamera.updateProjectionMatrix();
 		}
 		else {
-			//Perscamera.position.x = width / 2;
-			//Perscamera.position.y = height / 2;
+			// Perscamera.position.x = width / 2;
+			// Perscamera.position.y = height / 2;
+
 			Perscamera.position.z = -1000;
 
-			camera.aspect = window.innerWidth / window.innerHeight;
+			// camera.aspect = window.innerWidth / window.innerHeight;
 			Perscamera.updateProjectionMatrix();
 		}
 
