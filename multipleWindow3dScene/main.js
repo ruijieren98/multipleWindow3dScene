@@ -575,7 +575,7 @@ else
 			requestAnimationFrame(render);
 			shinyStar_stats.update();
 		}
-        
+        resize();
 	}
 
 
@@ -587,14 +587,16 @@ else
 
         if (orth_camera) {
 			Orthcamera = new t.OrthographicCamera(0, width, height, 0, -10000, 10000);
+			Orthcamera.aspect = width / height;
 			Orthcamera.updateProjectionMatrix();
 		}
 		else {
 			//Perscamera.position.x = width / 2;
 			//Perscamera.position.y = height / 2;
-			Perscamera.position.z = -1000;
 
-			camera.aspect = window.innerWidth / window.innerHeight;
+			//Perscamera.position.z = -1000;
+
+			Perscamera.aspect = width / height;
 			Perscamera.updateProjectionMatrix();
 		}
 
