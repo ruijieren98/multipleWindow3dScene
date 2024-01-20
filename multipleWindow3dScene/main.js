@@ -42,6 +42,7 @@ let uiIcons = [];
 
 let orth_camera = true;
 let gui = new GUI();
+gui.close();
 
 let Orthcamera;
 let Perscamera;
