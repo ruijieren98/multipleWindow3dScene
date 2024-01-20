@@ -4,6 +4,9 @@ Final Assignment for ACG course at Waseda U. [slides](https://esslab.jp/~ess/tea
 - [x] [Project Proposal](Initial_project.md) [goold drive](https://docs.google.com/document/d/16W4Wd0lcPZ71vZL2U5yrz4i_9uyCbTT8GA3Mi7HI9w4/edit?usp=sharing)
  Due: **2023/12/18**
 
+- [ ] [Presentation Slides](https://docs.google.com/presentation/d/1Gn-UmRjcYgKGUDHAmqA6SSXkL8c9epHFAm9GU6qHqW0/edit?usp=sharing)
+ Due: **2023/1/20**
+
 
 ## Getting Started
 
