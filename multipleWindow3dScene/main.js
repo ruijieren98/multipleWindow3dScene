@@ -590,9 +590,8 @@ else
 			Orthcamera.updateProjectionMatrix();
 		}
 		else {
-			Perscamera.position.x = width / 2;
-			Perscamera.position.y = height / 2;
-
+			//Perscamera.position.x = width / 2;
+			//Perscamera.position.y = height / 2;
 			Perscamera.position.z = -1000;
 
 			camera.aspect = window.innerWidth / window.innerHeight;
