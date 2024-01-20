@@ -381,8 +381,7 @@ else
 
 
 	function calculateAttraction(sphere) {
-		// 假设吸引力场的大小与sphere的半径成正比
-		return sphere.radius * 2; // 或者其他基于半径的公式
+		return sphere.radius * 2;
 	}
 	
 	function calculateSphericalCoordinates(satellite, sphere) {
