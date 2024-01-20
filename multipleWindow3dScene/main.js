@@ -46,6 +46,8 @@ let gui = new GUI();
 let Orthcamera;
 let Perscamera;
 
+let Debug = false;
+
 // get time in seconds since beginning of the day (so that all windows use the same time)
 function getTime ()
 {
@@ -284,7 +286,7 @@ else
 				//map: texture_sphere,
 				roughness: 0.14,
 				metalness: 1,
-				color: 0xc188c8,
+				color: 0xffffff,
 			} );
 
 			let s = 100 + i * 50;
@@ -306,7 +308,7 @@ else
 			gui.add(sphere.material, "roughness", 0, 1); // change roughness
 			gui.add(sphere.material, "metalness", 0, 1); // change metalness
 			var color = {
-				color: '#c188c8'
+				color: '#ffffff'
 			};
 			gui.addColor(color, 'color').onChange(function(newValue) {
 				// change color
@@ -321,11 +323,10 @@ else
             //axes helper for debug use
             let axesHelper = new t.AxesHelper(1000);
             axesHelpers.push(axesHelper);
-            scene.add(axesHelper);
+
 
 			let axesHelpers_satellite = new t.AxesHelper(100);
             axesHelpers_satellites.push(axesHelpers_satellite);
-            scene.add(axesHelpers_satellite);
 
 
 			let satellite = new THREE.Mesh( new t.SphereGeometry(16, 16, 16), new THREE.MeshBasicMaterial({color: c , wireframe: true}) );
@@ -339,7 +340,12 @@ else
 
 			let sphereHelper = new THREE.Mesh( new t.SphereGeometry(s, 32, 32), new THREE.MeshBasicMaterial({color: 0xc188c8 , wireframe: true}) );
 			sphereHelpers.push(sphereHelper)
-			world.add(sphereHelper);
+
+			if (Debug) {
+				scene.add(axesHelper);
+				scene.add(axesHelpers_satellite);
+				world.add(sphereHelper);
+			}
 
 			
 		}
