@@ -14,6 +14,10 @@ Multi-balls reflection &#8595;
 
 <img src='misc/multi_balls_reflection.png' width="400">
 
+Our Cosmos &#8595;
+
+<img src='misc/cosmos.gif' width="600">
+
 ## Getting Started
 
 ### Prerequisites
