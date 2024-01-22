@@ -1,8 +1,10 @@
-# ACG-final-assignment
+# multipleWindow3dScene
 
 
 
 This is the final group project for [Advanced Course in Computer Graphics](https://esslab.jp/~ess/en/teaching/2023/acg/) course at Waseda University. 
+
+Project title &#8595;
 
 Metal Planet: Multi-window Interactive Space Simulation
 
