@@ -32,8 +32,8 @@ Before you begin, ensure you have the latest version of Node.js installed on you
    Gain a local copy of the project by cloning the repository using the following command:
 
    ```bash
-   git clone https://github.com/ruijieren98/ACG-final-assignment.git
-   cd ACG-final-assignment
+   git clone https://github.com/ruijieren98/multipleWindow3dScene.git
+   cd multipleWindow3dScene
    ```
 
 2. **Install Dependencies**
@@ -57,7 +57,6 @@ Before you begin, ensure you have the latest version of Node.js installed on you
    In the project directory, start the server by running:
 
    ```bash
-   cd ACG-final-assignment/multipleWindow3dScene
    npx vite
    ```
 
